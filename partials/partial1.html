@@ -3,8 +3,8 @@
   <div class="header"><b>Gentle</b><br>Bitcoin 2of2 nlocktime recovery tool</div>
 </div>
 
-<p>Gentle is a tool that GreenAddress.it has developed for ease of mind of its users: Its function is to free funds from your GreenAddress.it wallet without our intervertion.</p>
-<p>This means that should we disappear for any reason, including out of our control, your funds are still available to you. See <a href="https://greenaddress.it/en/faq/" target="_blank">https://greenaddress.it/en/faq/</a></p>
+<p>Gentle is a tool that <a href="https://greenaddress.it">GreenAddress.it</a> has developed for ease of mind of its users: Its function is to free funds from your GreenAddress.it wallet without our intervertion.</p>
+<p>This means that should we disappear for any reason, including out of our control, your funds are still available to you. See <a href="https://greenaddress.it/en/faq/" target="_blank">FAQ</a></p>
 <p>The system will automatically provide you with the funds private key  and a transaction to send via any service such as Bitcoin-qt, Electrum, <a href="https://coinb.in/send-raw-transaction.html">https://coinb.in/send-raw-transaction.html</a>, <a href="https://blockchain.info/pushtx">https://blockchain.info/pushtx</a></p>
 <hr>
 <p>
@@ -20,5 +20,5 @@
 <hr>
 <p><b>Progress:</b> <span ng-hide="gentle.progress">0</span><span ng-show="gentle.progress">{{ gentle.progress }}</span>%</p>
 <p style="word-wrap: break-word;"><b>Transaction to push</b><br><span ng-hide="gentle.rawtx">...</span>{{ gentle.rawtx }}</p>
-<p ng-show="gentle.privkey"><b>Private key:</b> {{ gentle.privkey }}</p>
+<p ng-show="gentle.privkey"><b>Private key (from your mnemonic):</b> {{ gentle.privkey }}</p>
 <p ng-show="gentle.pointer"><b>Reference to key from mnemonic's seed:</b> m/1/{{ gentle.pointer }}</p>
