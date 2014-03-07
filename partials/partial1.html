@@ -1,0 +1,23 @@
+<div>
+  <div class="header-img"><img src="img/logo.png" /></div>
+  <div class="header"><b>Gentle</b><br>Bitcoin 2of2 nlocktime recovery tool</div>
+</div>
+
+<p>Gentle is a tool that GreenAddress.it has developed for ease of mind of its users: Its function is to free funds from your GreenAddress.it wallet without our intervertion.</p>
+<p>This means that should we disappear for any reason, including out of our control, your funds are still available to you. See <a href="https://greenaddress.it/en/faq/" target="_blank">https://greenaddress.it/en/faq/</a></p>
+<p>The system will automatically provide you with the funds private key  and a transaction to send via any service such as Bitcoin-qt, Electrum, <a href="https://coinb.in/send-raw-transaction.html">https://coinb.in/send-raw-transaction.html</a>, <a href="https://blockchain.info/pushtx">https://blockchain.info/pushtx</a></p>
+<hr>
+<p>
+  <b>Enter your GreenAddress.it mnemonic</b><br>
+  <input type="text" ng-model="gentle.mnemonic" placeholder="Mnemonic" ng-disabled="gentle.validating" />
+</p>
+<p>
+  <b>Paste here your nLockTime transaction</b><br>
+  <textarea ng-model="gentle.json" rows="10" cols="80" placeholder="nLockTime JSON" ng-disabled="gentle.validating" ></textarea>
+  <small>You can find these in your GreenAddress.it Wallet notification emails. Please do one at the time.</small>
+</p>
+<p class="error" ng-show="gentle.err">{{ gentle.err }}</p>
+<hr>
+<p><b>Progress:</b> <span ng-hide="gentle.progress">0</span><span ng-show="gentle.progress">{{ gentle.progress }}</span>%</p>
+<p style="word-wrap: break-word;"><b>Transaction to push</b><br><span ng-hide="gentle.rawtx">...</span>{{ gentle.rawtx }}</p>
+<p ng-show="gentle.privkey"><b>Private key:</b> {{ gentle.privkey }}</p>
