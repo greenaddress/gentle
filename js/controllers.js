@@ -30,6 +30,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
             }
             gentle.rawtx = Crypto.util.bytesToHex(tx.serialize());
             gentle.privkey = privkey.toString();
+            gentle.pointer = json.prevout_pointers[0];
         }
         var process = function() {
             gentle.validating = true;

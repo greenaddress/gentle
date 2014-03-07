@@ -21,3 +21,4 @@
 <p><b>Progress:</b> <span ng-hide="gentle.progress">0</span><span ng-show="gentle.progress">{{ gentle.progress }}</span>%</p>
 <p style="word-wrap: break-word;"><b>Transaction to push</b><br><span ng-hide="gentle.rawtx">...</span>{{ gentle.rawtx }}</p>
 <p ng-show="gentle.privkey"><b>Private key:</b> {{ gentle.privkey }}</p>
+<p ng-show="gentle.pointer"><b>Reference to key from mnemonic's seed:</b> m/1/{{ gentle.pointer }}</p>
