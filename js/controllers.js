@@ -25,11 +25,18 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                 in_script.writeBytes(in_.script.chunks[1]);  // ga sig
                 in_script.writeBytes(sign);  // user's sig
                 in_script.writeBytes(in_.script.chunks[3]);  // 2of2 outscript
-                console.log(in_script);
                 in_.script = in_script;
             }
             gentle.rawtx = Crypto.util.bytesToHex(tx.serialize());
-            gentle.privkey = privkey.toString();
+
+            var wif = privkey.priv.toByteArrayUnsigned();
+            while (wif.length < 32) wif.unshift(0);
+            wif.unshift(0x80);
+            wif.push(0x01)  // compressed;
+            var checksum = Crypto.SHA256(Crypto.SHA256(wif, {asBytes: true}), {asBytes: true});
+            wif = wif.concat(checksum.slice(0, 4));
+            gentle.privkey = B58.encode(wif);
+
             gentle.pointer = json.prevout_pointers[0];
         }
         var process = function() {
