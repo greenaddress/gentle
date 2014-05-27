@@ -8,10 +8,17 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
         var signTx = function(json, tx, seed) {
             gentle.validating = false;
             var hdwallet = new GAHDWallet({seed_hex: seed});
-            var master = hdwallet.subkey(1, false, true);
             var privkey;
             for (var i = 0; i < tx.ins.length; ++i) {
                 var in_ = tx.ins[i];
+                if (json.prevout_subaccounts && json.prevout_subaccounts[i]) {
+                    // subaccounts - branch 3
+                    var master = hdwallet.subkey(3, false, true);
+                    // priv-derived subaccount:
+                    master = master.subkey(json.prevout_subaccounts[i], true, true);
+                } else {
+                    var master = hdwallet.subkey(1, false, true);
+                }
                 var key = master.subkey(json.prevout_pointers[i], false, true);
                 key = new Bitcoin.ECKey(key.secret_exponent);
                 if (i == 0) privkey = key;
@@ -38,6 +45,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
             gentle.privkey = B58.encode(wif);
 
             gentle.pointer = json.prevout_pointers[0];
+            gentle.subaccount = json.prevout_subaccounts && json.prevout_subaccounts[0];
         }
         var process = function() {
             gentle.validating = true;

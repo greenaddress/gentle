@@ -21,4 +21,7 @@
 <p><b>Progress:</b> <span ng-hide="gentle.progress">0</span><span ng-show="gentle.progress">{{ gentle.progress }}</span>%</p>
 <p style="word-wrap: break-word;"><b>Transaction to push</b><br><span ng-hide="gentle.rawtx">...</span>{{ gentle.rawtx }}</p>
 <p ng-show="gentle.privkey"><b>Private key (from your mnemonic):</b> {{ gentle.privkey }}</p>
-<p ng-show="gentle.pointer"><b>Reference to key from mnemonic's seed:</b> m/1/{{ gentle.pointer }}</p>
+<p ng-show="gentle.pointer"><b>Reference to key from mnemonic's seed:</b>
+    <span ng-hide="gentle.subaccount">m/1/{{ gentle.pointer }}</span>
+    <span ng-show="gentle.subaccount">m/3/{{ gentle.subaccount}}'/{{ gentle.pointer }}</span>
+</p>
