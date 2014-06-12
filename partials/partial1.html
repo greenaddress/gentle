@@ -5,23 +5,30 @@
 
 <p>Gentle is a tool that <a href="https://greenaddress.it">GreenAddress.it</a> has developed for ease of mind of its users: Its function is to free funds from your GreenAddress.it wallet without our intervertion.</p>
 <p>This means that should we disappear for any reason, including out of our control, your funds are still available to you. See <a href="https://greenaddress.it/en/faq/" target="_blank">FAQ</a></p>
-<p>The system will automatically provide you with the funds private key  and a transaction to send via any service such as Bitcoin-qt, Electrum, <a href="https://coinb.in/send-raw-transaction.html">https://coinb.in/send-raw-transaction.html</a>.</p>
+<p>The system will automatically provide you with the funds private keys and transactions to send via any service such as Bitcoin-qt, Electrum, <a href="https://coinb.in/send-raw-transaction.html">https://coinb.in/send-raw-transaction.html</a>.</p>
 <hr>
 <p>
-  <b>Enter your GreenAddress.it mnemonic</b><br>
+  <b>Enter your GreenAddress.it mnemonic</b><br/>
   <input type="text" ng-model="gentle.mnemonic" placeholder="Mnemonic" ng-disabled="gentle.validating" />
 </p>
 <p>
-  <b>Paste here your nLockTime transaction</b><br>
-  <textarea ng-model="gentle.json" rows="10" cols="80" placeholder="nLockTime JSON" ng-disabled="gentle.validating" ></textarea>
-  <small>You can find these in your GreenAddress.it Wallet notification emails. Please do one at the time.</small>
+  <b>Upload your nLockTime transactions .zip file</b><br>
+  <input type="file" onchange="angular.element(this).scope().file_changed(this)"/>
+  <small>You can find this file in your latest GreenAddress.it Wallet notification email.</small>
 </p>
 <p class="error" ng-show="gentle.err">{{ gentle.err }}</p>
 <hr>
 <p><b>Progress:</b> <span ng-hide="gentle.progress">0</span><span ng-show="gentle.progress">{{ gentle.progress }}</span>%</p>
-<p style="word-wrap: break-word;"><b>Transaction to push</b><br><span ng-hide="gentle.rawtx">...</span>{{ gentle.rawtx }}</p>
-<p ng-show="gentle.privkey"><b>Private key (from your mnemonic):</b> {{ gentle.privkey }}</p>
-<p ng-show="gentle.pointer"><b>Reference to key from mnemonic's seed:</b>
-    <span ng-hide="gentle.subaccount">m/1/{{ gentle.pointer }}</span>
-    <span ng-show="gentle.subaccount">m/3/{{ gentle.subaccount}}'/{{ gentle.pointer }}</span>
-</p>
+<p style="word-wrap: break-word;"><b>Transactions to push</b><br>
+<span ng-hide="gentle.transactions && gentle.transactions[0].rawtx">...</span></p>
+<table ng-show="gentle.transactions && gentle.transactions[0].rawtx">
+<tr><th>Transaction</th><th>nLockTime<br/>Private key<br/>Key reference</th></tr>
+<tr ng-repeat="tx in gentle.transactions">
+	<td style="word-wrap: break-word; max-width: 500px;"><small>{{ tx.rawtx }}</small></td>
+	<td style="word-wrap: break-word; max-width: 300px;">{{ tx.parsed.lock_time }}<br/><br/>{{ tx.privkey }}<br/><br/>
+		<span ng-hide="tx.subaccount">m/1/{{ tx.pointer }}</span>
+	    <span ng-show="tx.subaccount">m/3/{{ tx.subaccount}}'/{{ tx.pointer }}</span>
+	</td>
+	
+</tr>
+</table>
