@@ -4,9 +4,7 @@
 
 angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
     controller('MyCtrl1', ['$scope', 'mnemonics', function($scope, mnemonics) {
-        var gentle = $scope.gentle = {
-            mnemonic: 'daughter grocery dutch vocal message dwarf save float praise depth nature learn seminar final couple stomach stay kangaroo unaware transfer paddle hint prefer claw'
-        };
+        var gentle = $scope.gentle = {};
         var signTx = function(tx, seed) {
             var hdwallet = new GAHDWallet({seed_hex: seed});
             var privkey;
