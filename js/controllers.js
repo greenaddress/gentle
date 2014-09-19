@@ -3,7 +3,7 @@
 /* Controllers */
 
 angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
-    controller('MyCtrl1', ['$scope', 'mnemonics', function($scope, mnemonics) {
+    controller('MyCtrl1', ['$scope', 'mnemonics', '$q', function($scope, mnemonics, $q) {
         var gentle = $scope.gentle = {};
         var signTx = function(tx, seed) {
             var hdwallet = new GAHDWallet({seed_hex: seed});
@@ -49,7 +49,15 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
         var process = function() {
             gentle.validating = true;
             gentle.transactions = [];
-            mnemonics.validateMnemonic(gentle.mnemonic).then(function() {
+            var mnemonic_words = gentle.mnemonic.split(' ');
+            var last_word = mnemonic_words[mnemonic_words.length-1];
+            // BTChip seed ends with 'X':
+            if (last_word.indexOf('X') == last_word.length-1) {
+                var validate_d = $q.when(true);
+            } else {
+                var validate_d = $q.when(mnemonics.validateMnemonic(gentle.mnemonic));
+            }
+            validate_d.then(function() {
                 gentle.err = undefined;
                 var failed = false, parsed_txs = [];
                 for (var i = 0; i < gentle.in_transactions.length; i++) {
@@ -86,7 +94,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
 
                     gentle.transactions.push({json: json, parsed: tx});
                 }
-                
+
                 if (!failed) {
                     var do_transactions = function() {
                         for (var i = 0; i < gentle.transactions.length; i++) {
@@ -95,11 +103,17 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                         gentle.transactions.sort(function(a, b) { return a.parsed.lock_time - b.parsed.lock_time; })
                         gentle.validating = false;
                     };
-                    
+
                     if (gentle.seed && gentle.seed_for == gentle.mnemonic) {
                         do_transactions();
                     } else {
-                        mnemonics.toSeed(gentle.mnemonic).then(function(data) {
+                        if (last_word.indexOf('X') == last_word.length-1) {
+                            var seed_d = $q.when(last_word.slice(0, -1));
+                        } else {
+                            var seed_d = mnemonics.toSeed(gentle.mnemonic);
+                        }
+                        seed_d.then(function(data) {
+                            gentle.progress = 100;
                             gentle.seed = data;
                             gentle.seed_for = gentle.mnemonic;
                             do_transactions();
@@ -112,7 +126,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                 }
             }, function(err) {
                 console.log(err);
-                gentle.validating = false; 
+                gentle.validating = false;
                 gentle.progress = 0;
                 gentle.err = err;
             });
