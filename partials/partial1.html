@@ -1,34 +1,117 @@
 <div>
   <div class="header-img"><img src="img/logo.png" /></div>
-  <div class="header"><b>Gentle</b><br>Bitcoin 2of2 nlocktime recovery tool</div>
+  <div class="header"><b>Gentle</b><br />Bitcoin 2of2 nlocktime recovery tool</div>
 </div>
 
-<p>Gentle is a tool that <a href="https://greenaddress.it">GreenAddress.it</a> has developed for ease of mind of its users: Its function is to free funds from your GreenAddress.it wallet without our intervertion.</p>
+<p>Gentle is a tool that <a href="https://greenaddress.it">GreenAddress</a> has developed for ease of mind of its users: Its function is to free funds from your GreenAddress wallet without our intervertion.</p>
 <p>This means that should we disappear for any reason, including out of our control, your funds are still available to you. See <a href="https://greenaddress.it/en/faq/" target="_blank">FAQ</a></p>
 <p>The system will automatically provide you with the funds private keys and transactions to send via any service such as Bitcoin-qt, Electrum, <a href="http://btc.blockr.io/tx/push">Blockr.io</a>.</p>
 <p>Gentle can be downloaded from <a href="https://github.com/greenaddress/gentle/archive/gh-pages.zip">GitHub</a> as a Zip (works with the Firefox Browser).</p>
 <hr>
 <p>
-  <b>Enter your GreenAddress.it mnemonic</b><br/>
-  <input type="text" ng-model="gentle.mnemonic" placeholder="Mnemonic" ng-disabled="gentle.validating" />
+  <b>Enter your GreenAddress mnemonic</b><br/>
+  <input type="text" ng-model="gentle.mnemonic" placeholder="Mnemonic" ng-disabled="gentle.validating || gentle.signing_transactions" />
 </p>
 <p>
   <b>Upload your nLockTime transactions .zip file</b><br>
   <input type="file" onchange="angular.element(this).scope().file_changed(this)"/>
-  <small>You can find this file in your latest GreenAddress.it Wallet notification email.</small>
+  You can find this file in your latest GreenAddress Wallet notification email.
 </p>
 <p class="error" ng-show="gentle.err">{{ gentle.err }}</p>
 <hr>
-<p><b>Progress:</b> <span ng-hide="gentle.progress">0</span><span ng-show="gentle.progress">{{ gentle.progress }}</span>%</p>
-<p style="word-wrap: break-word;"><b>Transactions to push</b><br>
-<span ng-hide="gentle.transactions && gentle.transactions[0].rawtx">...</span></p>
+<p style="width:300px; float:left"><b>Progress:</b> <span ng-hide="gentle.progress">0</span><span ng-show="gentle.progress">{{ gentle.progress }}</span>%</p>
+<p style="width:360px; float:right"><b>Current block (from Blockr.io)</b> {{gentle.fetched_block}} </p>
+<div style="float:left; width:300px">
+    <p style="word-wrap: break-word;"> <b>Transactions to push</b> </p>
+</div>
+<div style="float:right; width:260px">
+</div>
+
 <table ng-show="gentle.transactions && gentle.transactions[0].rawtx">
-<tr><th>Transaction</th><th>nLockTime<br/>Private key<br/>Key reference</th></tr>
-<tr ng-repeat="tx in gentle.transactions">
-	<td style="word-wrap: break-word; max-width: 500px;"><small>{{ tx.rawtx }}</small></td>
-	<td style="word-wrap: break-word; max-width: 300px;">{{ tx.parsed.lock_time }}<br/><br/>{{ tx.privkey }}<br/><br/>
-		<span ng-hide="tx.subaccount">m/1/{{ tx.pointer }}</span>
-	    <span ng-show="tx.subaccount">m/3/{{ tx.subaccount}}'/{{ tx.pointer }}</span>
-	</td>
+    <div style="float:right; font-size: 15px">
+        <span style="font-size:20px !important;" ng-show="gentle.signing_transactions > 0 && (gentle.transactions.length != gentle.show_transactions.length)"><b>Please wait: signing transactions ({{ gentle.total_signed }})...</b></span>
+        <button ng-show="!gentle.pushing && gentle.show_transactions[0].rawtx && (gentle.transactions.length == gentle.show_transactions.length)" ng-csv="gentle.csv" filename="gentle.csv" csv-header="['Private key', 'Transaction', 'nLockTime']">Export CSV</button>
+        <button ng-show="!gentle.pushing && gentle.show_transactions[0].rawtx && (gentle.transactions.length == gentle.show_transactions.length)" ng-click="confirmPushModalShown = true" ng-disabled="gentle.push_selected.length <= 0">Push selected</button>
+        <span style="font-size:20px !important;" ng-show="gentle.pushing"><b>Pushing transactions</b>: {{ gentle.remaining_time_push }} seconds left</span>
+        <br />
+        <span style="font-size:14px !important;" ng-show="gentle.pushing">push interval is 20 seconds, to avoid annoying services</span>
+    </div>
+
+    <tr><th><input type="checkbox" ng-disabled="(gentle.transactions.length != gentle.show_transactions.length)" ng-model="gentle.select_all_txs" ng-change="selectAllTxs()"></th><th>Amount</th><th>nLockTime</th><th>Private key</th><th>Status</th></tr>
+    <tr style="cursor:pointer" ng-dblclick="toggleModal(tx.rawtx)" onMouseOver="this.className='highlight'" onMouseOut="this.className='normal'" ng-repeat="tx in gentle.show_transactions track by $index">
+    <td><input type="checkbox" ng-model="gentle.txs[tx.rawtx].push"  ng-change="selectTx(tx.rawtx)" ng-disabled="tx.parsed.locktime > gentle.fetched_block"></td>
+    <td >{{ tx.amount }}</td>
+	<td>{{ tx.parsed.locktime }}</td>
+    <td>{{ tx.b58privkey }}</td>
+    <td align="right"><span ng-bind-html="tx.status"></span></td>
+
 </tr>
 </table>
+
+<modal-dialog show='confirmPushModalShown' width="550px">
+    <h4 class="center">You're about to push the selected transactions</h4>
+    <hr>
+    <p style="font-size:14px;">You understand that pushing the transaction you will loose the control of funds via your GreenAddress wallet, and you will need
+    to import the shown private key into a third-party client, to use them again. Also, standard transaction fees will be applied.</p>
+    <div align="center" style="margin: 0 0 20px 0">
+        <button ng-click="pushSelectedTxs(); confirmPushModalShown = false; modal_scope.hideModal()">Yes, I understand, push the transactions</button>
+    </div>
+
+</modal-dialog>
+
+<modal-dialog show='modalShown' width='798px'>
+    <div style="width:748px; padding: 0 10px 0 10px">
+        <h3>Transaction details</h3>
+        <hr>
+        <p style="word-wrap:break-word; width:760px; font-size:14px;">
+
+            <span ng-show="modal.tx.show_rawtx">
+                <b>Raw transaction:</b>
+                {{ modal.tx.rawtx }}
+                <br />
+            </span>
+        </p>
+        <div style="height:160px">
+            <div style="float:left; margin-top:30px">
+                <p style="font-size:15px;">
+                    <b>Amount: </b> {{ modal.tx.amount }} -
+                    <b>Subkey pointer:</b> {{ modal.tx.pointer }} -
+                    <b>nLockTime:</b> {{ modal.tx.parsed.locktime }}
+                    <br />
+                    <b>Estimated reedemable date:</b> {{ modal.tx.redeem_date }}
+                    <br />
+                    <b>Private key:</b> <br />{{ modal.tx.b58privkey }}
+                </p>
+            </div>
+            <div style="float:right">
+                <qr ng-show="modal.qrcode" text="modal.qrcode" size="150"></qr>
+            </div>
+        </div>
+        <hr>
+        <div style="word-wrap:break-word; width:740px; font-size:14px; padding: 0 10px 0 10px">
+            <form name="myForm">
+                <label class="label-push">
+                    <input class="input-push" type="checkbox" ng-model="modal.tx.checked" ng-disabled="(gentle.fetched_block == null) || (modal.tx.parsed.locktime == null) || (gentle.fetched_block < modal.tx.parsed.locktime)">
+                    I understand that pushing the transaction I will lose the control of funds via my GreenAddress wallet, and I will need
+                    to import the shown private key into a third-party client, to use them again. Also, standard transaction fees will be applied.
+                </label>
+                <div align="center" style="margin:10px">
+                    <button ng-hide="modal.tx.show_rawtx" ng-model="rawtx" ng-click="modal.tx.show_rawtx = !modal.tx.show_rawtx">Show raw transaction</button>
+                    <button ng-show="modal.tx.show_rawtx" ng-model="rawtx" ng-click="modal.tx.show_rawtx = !modal.tx.show_rawtx">Hide raw transaction</button>
+                    <button ng-model="button" ng-disabled="!modal.tx.checked" ng-click="pushTx(modal.tx.rawtx)">Push transaction via Blockr.io</button>
+                </div>
+                <div align="center">
+                    <p style="font-weight: bold"><span ng-bind-html="modal.push_message"></span></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</modal-dialog>
+
+<div class='ng-modal' ng-show='show'>
+    <div class='ng-modal-overlay' ng-click='hideModal()'></div>
+    <div class='ng-modal-dialog' ng-style='dialogStyle'>
+        <div class='ng-modal-close' ng-click='hideModal()'>X</div>
+        <div class='ng-modal-dialog-content'></div>
+    </div>
+</div>

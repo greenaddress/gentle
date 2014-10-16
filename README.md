@@ -10,6 +10,8 @@ This means that should GreenAddress disappear for any reason, including out of t
 
 The system will automatically provide you with the funds private keys and transactions to send via any service such as Bitcoin-qt, Electrum or [Blockr.io](https://btc.blockr.io/tx/push)
 
+User is also able to check transactions details, export data in CSV format or directly push transactions via third-party services.
+
 ## Which browser does this support?
 
 Firefox only at the moment but an app is in the works.

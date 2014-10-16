@@ -41,18 +41,19 @@ angular.module('gentleApp.mnemonics_services', [])
             }
             var binary = '';
             for(var i = 0; i < indices.length; i++) {
-                var binPart = new BigInteger(indices[i].toString()).toRadix(2);
+                var binPart = new Bitcoin.BigInteger(indices[i].toString()).toRadix(2);
                 while (binPart.length < 11) binPart = '0' + binPart;
                 binary += binPart;
             }
-            var retval = new BigInteger(binary, 2).toByteArrayUnsigned();
+            var retval = new Bitcoin.BigInteger(binary, 2).toByteArrayUnsigned();
             var checksum = retval.pop();
-            var hash = Crypto.SHA256(retval, {asBytes: true});
+            var hash = Bitcoin.CryptoJS.SHA256(Bitcoin.convert.bytesToWordArray(retval));
+            hash = Bitcoin.convert.wordArrayToBytes(hash);
             if(hash[0] != checksum) deferred.reject('Checksum does not match');  // checksum
             deferred.resolve(retval);
-        })
+        });
         return deferred.promise;
-    }
+    };
     mnemonics.fromMnemonic = function(mnemonic) {
         var bytes = mnemonics.validateMnemonic(mnemonic);
         var deferred = $q.defer();
@@ -71,10 +72,13 @@ angular.module('gentleApp.mnemonics_services', [])
                 throw("Wordlist should contain 2048 words, but it contains "+words.length+" words.");
             }
 
-            var binary = BigInteger.fromByteArrayUnsigned(data).toRadix(2);
+            var binary = Bitcoin.BigInteger.fromByteArrayUnsigned(data).toRadix(2);
             while (binary.length < data.length * 8) { binary = '0' + binary; }
 
-            var hash = BigInteger.fromByteArrayUnsigned(Crypto.SHA256(data, {asBytes: true})).toRadix(2);
+            var bytes = Bitcoin.CryptoJS.SHA256(Bitcoin.CryptoJS.SHA256(Bitcoin.convert.bytesToWordArray(data)));
+            bytes = Bitcoin.convert.wordArrayToBytes(bytes);
+
+            var hash = Bitcoin.BigInteger.fromByteArrayUnsigned(bytes).toRadix(2);
             while (hash.length < 256) { hash = '0' + hash; }
             binary += hash.substr(0, data.length / 4);  // checksum
 
@@ -86,7 +90,7 @@ angular.module('gentleApp.mnemonics_services', [])
             deferred.resolve(mnemonic.join(' '));
         });
         return deferred.promise;
-    }
+    };
     mnemonics.toSeed = function(mnemonic) {
         var deferred = $q.defer();
         var k = 'mnemonic';
@@ -99,7 +103,7 @@ angular.module('gentleApp.mnemonics_services', [])
             } else {
                 deferred.notify(message.data.progress);
             }
-        }
+        };
         return deferred.promise;
     };
     return mnemonics;

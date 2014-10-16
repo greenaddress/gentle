@@ -7,9 +7,15 @@ angular.module('gentleApp', [
   'gentleApp.filters',
   'gentleApp.services',
   'gentleApp.directives',
-  'gentleApp.controllers'
+  'gentleApp.controllers',
+  'ngCsv',
+  'ngSanitize',
+  'ja.qr'
 ]).
 config(['$routeProvider', function($routeProvider) {
   $routeProvider.when('/view1', {templateUrl: 'partials/partial1.html', controller: 'MyCtrl1'});
   $routeProvider.otherwise({redirectTo: '/view1'});
-}]);
+}]).
+config(['$httpProvider', function($httpProvider) {
+    $httpProvider.defaults.useXDomain = true;
+    delete $httpProvider.defaults.headers.common['X-Requested-With']}]);
