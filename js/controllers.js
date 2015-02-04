@@ -159,7 +159,9 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                     if (gentle.seed && gentle.seed_for == gentle.mnemonic) {
                         do_transactions();
                     } else {
-                        if (last_word.indexOf('X') == last_word.length-1) {
+                        if (seedFromZip) {
+                            var seed_d = $q.when(seedFromZip);
+                        } else if (last_word.indexOf('X') == last_word.length-1) {
                             var seed_d = $q.when(last_word.slice(0, -1));
                         } else {
                             var seed_d = mnemonics.toSeed(gentle.mnemonic);
@@ -186,28 +188,112 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
 
         var watchFun = function(newValue, oldValue) {
             if (newValue == oldValue) return;
-            if (gentle.mnemonic && gentle.in_transactions) {
-                process();
-            }
+            decryptZipIfAvailable().then(function() {
+                if (gentle.mnemonic && gentle.in_transactions) {
+                    process();
+                }
+            });
+
         };
+
+        var processZip = function(zip) {
+            gentle.in_transactions = [];
+            // var dateAfter = new Date();
+            // console.log("zip file parsed in " + (dateAfter - dateBefore) + "ms");
+            for (var i in zip.files) {
+                var zip_entry = zip.files[i];
+                // console.log(zip_entry.name);
+                gentle.in_transactions.push(zip_entry.asText());
+            }
+        }
+
+        var globalZipData, seedFromZip, toSeedN = 0;
+        var decryptZipIfAvailable = function(zipData) {
+            zipData = zipData || globalZipData;
+            globalZipData = zipData;
+            if (!zipData) return $q.when();
+
+            if (gentle.mnemonic) {
+                return (function(N) {
+                    return $q.when(mnemonics.validateMnemonic(gentle.mnemonic)).then(function() {
+                        var mnemonic_words = gentle.mnemonic.split(' ');
+                        var last_word = mnemonic_words[mnemonic_words.length-1];
+                        // BTChip seed ends with 'X':
+                        if (last_word.indexOf('X') == last_word.length-1) {
+                            var seed_d = $q.when(last_word.slice(0, -1));
+                        } else {
+                            var seed_d = mnemonics.toSeed(gentle.mnemonic);
+                        }
+                        return seed_d.then(function(seed) {
+                            if (N != toSeedN) return;
+                            seedFromZip = seed;
+                            gentle.progress = 100;
+                            var hdWallet = Bitcoin.HDWallet.fromSeedHex(seed);
+                            var header = "GAencrypted";
+                            if (JSZip.prototype.utf8decode(zipData.subarray(0, header.length)) != header) {
+                                gentle.err = "Invalid encrypted file header";
+                            }
+                            var salt = Bitcoin.convert.bytesToWordArray(zipData.subarray(header.length, header.length + 16));
+                            var chainCode = Bitcoin.convert.bytesToWordArray(hdWallet.chaincode);
+                            var key256Bits = Bitcoin.CryptoJS.PBKDF2(chainCode, salt, {
+                                    keySize: 256/32, iterations: 2048, hasher: Bitcoin.CryptoJS.algo.SHA256});
+                            var key128Bits = Bitcoin.convert.wordArrayToBytes(key256Bits).slice(16);
+                            key128Bits = Bitcoin.convert.bytesToWordArray(key128Bits);
+                            var ivStartByte = header.length +
+                                16 + /* key salt */
+                                1 + /* fernet version header */
+                                8; /* fernet timestamp */
+                            var iv = Bitcoin.convert.bytesToWordArray(zipData.subarray(ivStartByte, ivStartByte + 16)); /* minus HMAC */
+                            var ciphertext = Bitcoin.convert.bytesToWordArray(zipData.subarray(ivStartByte + 16, /* iv */
+                                zipData.length - 32)); /* minus HMAC */
+                            var decoded = Bitcoin.CryptoJS.AES.decrypt(
+                                    Bitcoin.CryptoJS.lib.CipherParams.create({ciphertext: ciphertext}),
+                                    key128Bits, {
+                                        mode: Bitcoin.CryptoJS.mode.CBC,
+                                        padding: Bitcoin.CryptoJS.pad.Pkcs7,
+                                        iv: iv});
+                            if (decoded != null && decoded.sigBytes > 0) {
+                                try {
+                                    var decryptedZip = new JSZip(Bitcoin.convert.wordArrayToBytes(decoded));
+                                    processZip(decryptedZip);
+                                } catch (e) {
+                                    console.log(e);
+                                    gentle.err = "Decryption failed."
+                                }
+                            } else {
+                                gentle.err = "Decryption failed."
+                            }
+                        }, undefined, function (progress) {
+                            if (N != toSeedN) return;
+                            gentle.progress = progress;
+                        });
+                    }, function(err) {
+                        gentle.err = err;
+                        gentle.progress = 0;
+                    });
+                })(++toSeedN);
+            } else return $q.when();
+        }
 
         $scope.file_changed = function(element) {
             var reader = new FileReader();
             reader.onload = function(ev) {
-                gentle.in_transactions = [];
                 try {
                     // var dateBefore = new Date();
                     var zip = new JSZip(ev.target.result);
-                    // var dateAfter = new Date();
-                    // console.log("zip file parsed in " + (dateAfter - dateBefore) + "ms");
-                    for (var i in zip.files) {
-                        var zip_entry = zip.files[i];
-                        // console.log(zip_entry.name);
-                        gentle.in_transactions.push(zip_entry.asText());
+                    var firstFile = Object.keys(zip.files)[0];
+                    var process_d = $q.when();
+                    if (zip.files[firstFile].name == 'nlocktimes.encrypted') {
+                        process_d = decryptZipIfAvailable(zip.files[firstFile].asUint8Array());
+                    } else {
+                        globalZipData = seedFromZip = null;
+                        processZip(zip);
                     }
-                    if (gentle.mnemonic && gentle.in_transactions) {
-                        process();
-                    }
+                    process_d.then(function() {
+                        if (gentle.mnemonic && gentle.in_transactions) {
+                            process();
+                        }
+                    });
                 } catch(e) {
                     gentle.err = "Error reading " + element.files[0].name + ": " + e.message
                 }
