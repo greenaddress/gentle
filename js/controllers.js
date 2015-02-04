@@ -233,14 +233,8 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                             if (JSZip.prototype.utf8decode(zipData.subarray(0, header.length)) != header) {
                                 gentle.err = "Invalid encrypted file header";
                             }
-                            var salt = Bitcoin.convert.bytesToWordArray(zipData.subarray(header.length, header.length + 16));
-                            var chainCode = Bitcoin.convert.bytesToWordArray(hdWallet.chaincode);
-                            var key256Bits = Bitcoin.CryptoJS.PBKDF2(chainCode, salt, {
-                                    keySize: 256/32, iterations: 2048, hasher: Bitcoin.CryptoJS.algo.SHA256});
-                            var key128Bits = Bitcoin.convert.wordArrayToBytes(key256Bits).slice(16);
-                            key128Bits = Bitcoin.convert.bytesToWordArray(key128Bits);
+                            var key128Bits = Bitcoin.convert.bytesToWordArray(hdWallet.chaincode.slice(16));
                             var ivStartByte = header.length +
-                                16 + /* key salt */
                                 1 + /* fernet version header */
                                 8; /* fernet timestamp */
                             var iv = Bitcoin.convert.bytesToWordArray(zipData.subarray(ivStartByte, ivStartByte + 16)); /* minus HMAC */
