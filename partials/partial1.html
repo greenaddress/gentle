@@ -13,6 +13,11 @@
   <input type="text" ng-model="gentle.mnemonic" placeholder="Mnemonic" ng-disabled="gentle.validating || gentle.signing_transactions" />
 </p>
 <p>
+  <b>Enter your GreenAddress mnemonic passphrase (only if mnemonic is 27 words)</b><br/>
+  <input type="text" ng-model="gentle.passphrase" placeholder="Passphrase" ng-disabled="gentle.validating || gentle.signing_transactions" />
+</p>
+
+<p>
   <b>Upload your nLockTime transactions .zip file</b><br>
   <input type="file" onchange="angular.element(this).scope().file_changed(this)"/>
   You can find this file in your latest GreenAddress Wallet notification email.
