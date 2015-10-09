@@ -221,7 +221,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                     var dec_bytes = bip38.decrypt({data: mnem_bytes, key: gentle.passphrase});
                     return $q.when(mnemonics.toMnemonic(dec_bytes)).then(function(new_mnemonic){
                          gentle.new_mnemonic = new_mnemonic;
-                         if (gentle.mnemonic.split(' ').length === 24){
+                         if (gentle.mnemonic.split(' ').length === 24 || (gentle.mnemonic.split(' ').length == 2)){
                              gentle.new_mnemonic = gentle.mnemonic;
                          }else if (gentle.new_mnemonic.split(' ').length !== 24 && gentle.mnemonic.split(' ').length === 27) {
                              //This code is better in validateMnemonic
