@@ -104,7 +104,7 @@ angular.module('gentleApp.services', [])
                     return false
                 }
             };
-            $http.get('http://btc.blockr.io/api/v1/block/info/last').success(function(data) {
+            $http.get('https://btc.blockr.io/api/v1/block/info/last').success(function(data) {
                 try {
                     var res = angular.fromJson(data);
                     if (('data' in res) && ('nb' in res['data'])) {
@@ -131,7 +131,7 @@ angular.module('gentleApp.services', [])
 
         gentle_services.push_tx = function(raw_tx) {
             var deferred = $q.defer();
-            $http.post('http://btc.blockr.io/api/v1/tx/push', 'hex='+raw_tx,
+            $http.post('https://btc.blockr.io/api/v1/tx/push', 'hex='+raw_tx,
                 {headers: {"Content-Type": "application/x-www-form-urlencoded"}
                 }).success(function(res) {
                     deferred.resolve({'status': res.status, 'rawtx': raw_tx, 'data': res.data})
