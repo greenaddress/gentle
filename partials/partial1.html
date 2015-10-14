@@ -13,8 +13,7 @@
   <input type="text" ng-model="gentle.mnemonic" placeholder="Mnemonic" ng-disabled="gentle.validating || gentle.signing_transactions" />
 </p>
 <p>
-  <b>Enter your GreenAddress mnemonic passphrase (only if mnemonic is 27 words)</b><br/>
-  <input type="text" ng-model="gentle.passphrase" placeholder="Passphrase" ng-disabled="gentle.validating || gentle.signing_transactions" />
+  <input type="text" ng-model="gentle.passphrase" placeholder="Please Enter Your Encryption Passphrase" ng-show="gentle.mnemonic.split(' ').length == 27" class="ng-hide" ng-disabled="gentle.validating || gentle.signing_transactions" />
 </p>
 
 <p>
