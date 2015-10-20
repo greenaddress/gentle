@@ -216,62 +216,82 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
             if (!zipData) return $q.when();
 
             if (gentle.mnemonic) {
-               
-                return $q.when(mnemonics.fromMnemonic(gentle.mnemonic)).then(function(mnem_bytes){
-                    var dec_bytes = bip38.decrypt({data: mnem_bytes, key: gentle.passphrase});
-                    return $q.when(mnemonics.toMnemonic(dec_bytes)).then(function(new_mnemonic){
-                         gentle.new_mnemonic = new_mnemonic;
-                         if (gentle.mnemonic.split(' ').length === 24){
-                             gentle.new_mnemonic = gentle.mnemonic;
-                         }else if (gentle.new_mnemonic.split(' ').length !== 24 && gentle.mnemonic.split(' ').length === 27) {
-                             //This code is better in validateMnemonic
-                             //but error code is special case of failure.
-                             gentle.err = "Invalid passphrase for entered mnemonic";
-                             return;
+                var mnemonic_words = gentle.mnemonic.split(' ');
+                var last_word = mnemonic_words[mnemonic_words.length-1];
+                if (last_word.indexOf('X') == last_word.length-1 || mnemonic_words.length == 24) {
+                   var converte_d = $q.when(gentle.mnemonic);
+                }
+                else if (mnemonic_words.length == 27) {
+                   var converte_d = $q.when(mnemonics.fromMnemonic(gentle.mnemonic)).then(function(mnem_bytes){
+                        var dec_bytes = bip38.decrypt({data: mnem_bytes, key: gentle.passphrase});
+                        return $q.when(mnemonics.toMnemonic(dec_bytes));
+                    }, function(err) {
+			gentle.err = err;
+	    		return $q.when();		
+		    });
+                }
+		else {
+		    gentle.err = "Please verify your input, invalid number of mnemonic words or bad hex seed";
+		    return $q.when();
+		}
+                return converte_d.then(function(new_mnemonic){
+                     gentle.new_mnemonic = new_mnemonic;
+                     if (gentle.new_mnemonic.split(' ').length !== 24 && gentle.mnemonic.split(' ').length === 27) {
+                         //Invalid passphrase spits of mnemonic of length 2
+                         gentle.err = "Invalid passphrase for entered mnemonic";
+                         return;
+                     }
+                     return (function(N) {
+                         var mnemonic_words = gentle.new_mnemonic.split(' ');
+                         var last_word = mnemonic_words[mnemonic_words.length-1];
+                         if (last_word.indexOf('X') == last_word.length-1) {
+                             var validate_d = $q.when(true);
                          }
-                         return (function(N) {
-                             return $q.when(mnemonics.validateMnemonic(gentle.new_mnemonic)).then(function() {
-                                 var mnemonic_words = gentle.new_mnemonic.split(' ');
-                                 var last_word = mnemonic_words[mnemonic_words.length-1];
-                                 // BTChip seed ends with 'X':
-                                 if (last_word.indexOf('X') == last_word.length-1) {
-                                     var seed_d = $q.when(last_word.slice(0, -1));
-                                 } else {
-                                     var seed_d = mnemonics.toSeed(gentle.new_mnemonic);
+                         else {
+                             var validate_d = $q.when(mnemonics.validateMnemonic(gentle.new_mnemonic));
+                         }
+                         return validate_d.then(function() {
+                             var mnemonic_words = gentle.new_mnemonic.split(' ');
+                             var last_word = mnemonic_words[mnemonic_words.length-1];
+                             // BTChip seed ends with 'X':
+                             if (last_word.indexOf('X') == last_word.length-1) {
+                                 var seed_d = $q.when(last_word.slice(0,-1));
+                             } else {
+                                 var seed_d = mnemonics.toSeed(gentle.new_mnemonic);
+                             }
+                             return seed_d.then(function(seed) {
+                                 if (N != toSeedN) return;
+                                 seedFromZip = seed;
+                                 gentle.progress = 100;
+                                 var hdWallet = Bitcoin.HDWallet.fromSeedHex(seed);
+                                 var header = "GAencrypted";
+                                 if (JSZip.prototype.utf8decode(zipData.subarray(0, header.length)) != header) {
+                                     gentle.err = "Invalid encrypted file header";
                                  }
-                                 return seed_d.then(function(seed) {
-                                     if (N != toSeedN) return;
-                                     seedFromZip = seed;
-                                     gentle.progress = 100;
-                                     var hdWallet = Bitcoin.HDWallet.fromSeedHex(seed);
-                                     var header = "GAencrypted";
-                                     if (JSZip.prototype.utf8decode(zipData.subarray(0, header.length)) != header) {
-                                         gentle.err = "Invalid encrypted file header";
-                                     }
-                                     var key128Bits = Bitcoin.convert.bytesToWordArray(hdWallet.chaincode.slice(16));
-                                     var ivStartByte = header.length +
-                                     1 + /* fernet version header */
-                                     8; /* fernet timestamp */
-                                     var iv = Bitcoin.convert.bytesToWordArray(zipData.subarray(ivStartByte, ivStartByte + 16)); /* minus HMAC */
-                                     var ciphertext = Bitcoin.convert.bytesToWordArray(zipData.subarray(ivStartByte + 16, /* iv */
-                                     zipData.length - 32)); /* minus HMAC */
-                                     var decoded = Bitcoin.CryptoJS.AES.decrypt(
-                                     Bitcoin.CryptoJS.lib.CipherParams.create({ciphertext: ciphertext}),
-                                     key128Bits, {
-                                        mode: Bitcoin.CryptoJS.mode.CBC,
-                                        padding: Bitcoin.CryptoJS.pad.Pkcs7,
-                                        iv: iv});
-                                     if (decoded != null && decoded.sigBytes > 0) {
-                                         try {
-                                            var decryptedZip = new JSZip(Bitcoin.convert.wordArrayToBytes(decoded));
-                                            processZip(decryptedZip);
-                                         } catch (e) {
-                                             console.log(e);
-                                             gentle.err = "Decryption failed."
-                                         }
-                                     } else {
+                                 var key128Bits = Bitcoin.convert.bytesToWordArray(hdWallet.chaincode.slice(16));
+                                 var ivStartByte = header.length +
+                                 1 + /* fernet version header */
+                                 8; /* fernet timestamp */
+                                 var iv = Bitcoin.convert.bytesToWordArray(zipData.subarray(ivStartByte, ivStartByte + 16)); /* minus HMAC */
+                                 var ciphertext = Bitcoin.convert.bytesToWordArray(zipData.subarray(ivStartByte + 16, /* iv */
+                                 zipData.length - 32)); /* minus HMAC */
+                                 var decoded = Bitcoin.CryptoJS.AES.decrypt(
+                                 Bitcoin.CryptoJS.lib.CipherParams.create({ciphertext: ciphertext}),
+                                 key128Bits, {
+                                    mode: Bitcoin.CryptoJS.mode.CBC,
+                                    padding: Bitcoin.CryptoJS.pad.Pkcs7,
+                                    iv: iv});
+                                 if (decoded != null && decoded.sigBytes > 0) {
+                                     try {
+                                        var decryptedZip = new JSZip(Bitcoin.convert.wordArrayToBytes(decoded));
+                                        processZip(decryptedZip);
+                                     } catch (e) {
+                                         console.log(e);
                                          gentle.err = "Decryption failed."
                                      }
+                                 } else {
+                                     gentle.err = "Decryption failed."
+                                 }
                                  }, undefined, function (progress) {
                                      if (N != toSeedN) return;
                                      gentle.progress = progress;
@@ -282,10 +302,6 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                          });
                      })(++toSeedN);
                  });
-             }, function(err) {
-                gentle.err = err;
-                gentle.progress = 0;
-             });
                 
             } else return $q.when();
         }
