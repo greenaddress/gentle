@@ -14,8 +14,10 @@ The user is also able to check transactions details, export data in CSV format o
 
 ## Which browser does this support?
 
-Firefox only at the moment but an app is in the works.
+Firefox and Chrome/Chromium only at the moment but an app is in the works.
 
+Note:
 
+To use Gentle with Chrome/Chromium you need to open the browser with the --allow-file-access-from-files flag or serve the files from a local webserver.
 
-
+If you have python installed you can get a simple web server by using `python -m SimpleHTTPServer 8080` in the gentle directory and then point your browser at http://localhost:8080
