@@ -12,7 +12,7 @@ The system will automatically provide you with the fund's private keys and trans
 
 The user is also able to check transactions details, export data in CSV format or directly push transactions via third-party services.
 
-## Which browser does this support?
+## Which browser does Gentle support?
 
 Firefox and Chrome/Chromium only at the moment but an app is in the works.
 
@@ -20,4 +20,8 @@ Note:
 
 To use Gentle with Chrome/Chromium you need to open the browser with the --allow-file-access-from-files flag or serve the files from a local webserver.
 
-If you have python installed you can get a simple web server by using `python -m SimpleHTTPServer 8080` in the gentle directory and then point your browser at http://localhost:8080
+If you have python installed you can get a simple web server by opening a shell, entering the gentle directory and run:
+
+ `python -m SimpleHTTPServer 8080`
+
+Once you have your webserver running open in your browser [http://localhost:8080](http://localhost:8080)
