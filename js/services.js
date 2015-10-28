@@ -74,7 +74,7 @@ angular.module('gentleApp.services', [])
         gentle_services.parseTx = function(index, tx, seed, callback) {
             var deferred = $q.defer();
             var cb = function(res) {
-                var transaction = Bitcoin.Transaction.deserialize(res.data.json.tx);
+                var transaction = Bitcoin.Transaction.fromHex(res.data.json.tx);
                 var output = {'json': res.data.json,
                     'unsigned': res.data.unsigned,
                     'parsed': transaction,

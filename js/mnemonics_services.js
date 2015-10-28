@@ -1,5 +1,6 @@
 angular.module('gentleApp.mnemonics_services', [])
 .factory('mnemonics', ['$q', '$http', function($q, $http) {
+
     var mnemonics = {};
     var english_txt;
     var getEnglishTxt = function() {
@@ -51,10 +52,13 @@ angular.module('gentleApp.mnemonics_services', [])
             var bits = words.length*11 - words.length/3;
             var retval = new Bitcoin.BigInteger(binary.substr(0, bits), 2).toByteArrayUnsigned();
             while (retval.length < bits/8) retval.unshift(0);
-
+	    //bcjs 0.2 made sure values were non-negative while 2.1.2 doesn't, so we must do here
+            for (var i=0; i< retval.length; i++) {
+                retval[i] = (retval[i]<0) ? retval[i] + 256 : retval[i];
+	    }
             var checksum = binary.substr(bits);
-            var wordArray = Bitcoin.convert.bytesToWordArray(retval);
-            var hash = Bitcoin.convert.wordArrayToBytes(Bitcoin.CryptoJS.SHA256(wordArray));
+            var wordArray = new Bitcoin.CryptoJS.lib.WordArray.init(bytesToWords(retval), retval.length);
+            var hash = wordsToBytes(Bitcoin.CryptoJS.SHA256(wordArray).words);
             var binHash = '';
             for(var i = 0; i < hash.length; i++) {
                 var binPart = new Bitcoin.BigInteger(hash[i].toString()).toRadix(2);
@@ -88,8 +92,8 @@ angular.module('gentleApp.mnemonics_services', [])
             var binary = Bitcoin.BigInteger.fromByteArrayUnsigned(data).toRadix(2);
             while (binary.length < data.length * 8) { binary = '0' + binary; }
 
-            var bytes = Bitcoin.CryptoJS.SHA256(Bitcoin.convert.bytesToWordArray(data));
-            bytes = Bitcoin.convert.wordArrayToBytes(bytes);
+            var bytes = Bitcoin.CryptoJS.SHA256(bytesToWordArray(data));
+            bytes = wordArrayToBytes(bytes);
 
             var hash = Bitcoin.BigInteger.fromByteArrayUnsigned(bytes).toRadix(2);
             while (hash.length < 256) { hash = '0' + hash; }
