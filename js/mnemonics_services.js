@@ -57,8 +57,8 @@ angular.module('gentleApp.mnemonics_services', [])
                 retval[i] = (retval[i]<0) ? retval[i] + 256 : retval[i];
 	    }
             var checksum = binary.substr(bits);
-            var wordArray = new Bitcoin.CryptoJS.lib.WordArray.init(bytesToWords(retval), retval.length);
-            var hash = wordsToBytes(Bitcoin.CryptoJS.SHA256(wordArray).words);
+            var wordArray = new Bitcoin.CryptoJS.lib.WordArray.init(BitcoinAux.bytesToWords(retval), retval.length);
+            var hash = BitcoinAux.wordsToBytes(Bitcoin.CryptoJS.SHA256(wordArray).words);
             var binHash = '';
             for(var i = 0; i < hash.length; i++) {
                 var binPart = new Bitcoin.BigInteger(hash[i].toString()).toRadix(2);
@@ -92,8 +92,8 @@ angular.module('gentleApp.mnemonics_services', [])
             var binary = Bitcoin.BigInteger.fromByteArrayUnsigned(data).toRadix(2);
             while (binary.length < data.length * 8) { binary = '0' + binary; }
 
-            var bytes = Bitcoin.CryptoJS.SHA256(bytesToWordArray(data));
-            bytes = wordArrayToBytes(bytes);
+            var bytes = Bitcoin.CryptoJS.SHA256(BitcoinAux.bytesToWordArray(data));
+            bytes = BitcoinAux.wordArrayToBytes(bytes);
 
             var hash = Bitcoin.BigInteger.fromByteArrayUnsigned(bytes).toRadix(2);
             while (hash.length < 256) { hash = '0' + hash; }

@@ -268,12 +268,12 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                                  if (JSZip.prototype.utf8decode(zipData.subarray(0, header.length)) != header) {
                                      gentle.err = "Invalid encrypted file header";
                                  }
-                                 var key128Bits = bytesToWordArray(hdWallet.chainCode.slice(16));
+                                 var key128Bits = BitcoinAux.bytesToWordArray(hdWallet.chainCode.slice(16));
                                  var ivStartByte = header.length +
                                  1 + /* fernet version header */
                                  8; /* fernet timestamp */
-                                 var iv = bytesToWordArray(zipData.subarray(ivStartByte, ivStartByte + 16)); /* minus HMAC */
-                                 var ciphertext = bytesToWordArray(zipData.subarray(ivStartByte + 16, /* iv */
+                                 var iv = BitcoinAux.bytesToWordArray(zipData.subarray(ivStartByte, ivStartByte + 16)); /* minus HMAC */
+                                 var ciphertext = BitcoinAux.bytesToWordArray(zipData.subarray(ivStartByte + 16, /* iv */
                                  zipData.length - 32)); /* minus HMAC */
                                  var decoded = Bitcoin.CryptoJS.AES.decrypt(
                                  Bitcoin.CryptoJS.lib.CipherParams.create({ciphertext: ciphertext}),
@@ -283,7 +283,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                                     iv: iv});
                                  if (decoded != null && decoded.sigBytes > 0) {
                                      try {
-                                        var decryptedZip = new JSZip(wordArrayToBytes(decoded));
+                                        var decryptedZip = new JSZip(BitcoinAux.wordArrayToBytes(decoded));
                                         processZip(decryptedZip);
                                      } catch (e) {
                                          console.log(e);
