@@ -133,7 +133,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
 
                     //3. Parse transaction
                     try {
-                        var tx = Bitcoin.Transaction.deserialize(json.tx);
+                        var tx = Bitcoin.Transaction.fromHex(json.tx);
                         var locktime = tx.locktime;
                     } catch (e) {
                         failed = true;
@@ -263,17 +263,17 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                                  if (N != toSeedN) return;
                                  seedFromZip = seed;
                                  gentle.progress = 100;
-                                 var hdWallet = Bitcoin.HDWallet.fromSeedHex(seed);
+                                 var hdWallet = Bitcoin.HDNode.fromSeedHex(seed);
                                  var header = "GAencrypted";
                                  if (JSZip.prototype.utf8decode(zipData.subarray(0, header.length)) != header) {
                                      gentle.err = "Invalid encrypted file header";
                                  }
-                                 var key128Bits = Bitcoin.convert.bytesToWordArray(hdWallet.chaincode.slice(16));
+                                 var key128Bits = BitcoinAux.bytesToWordArray(hdWallet.chainCode.slice(16));
                                  var ivStartByte = header.length +
                                  1 + /* fernet version header */
                                  8; /* fernet timestamp */
-                                 var iv = Bitcoin.convert.bytesToWordArray(zipData.subarray(ivStartByte, ivStartByte + 16)); /* minus HMAC */
-                                 var ciphertext = Bitcoin.convert.bytesToWordArray(zipData.subarray(ivStartByte + 16, /* iv */
+                                 var iv = BitcoinAux.bytesToWordArray(zipData.subarray(ivStartByte, ivStartByte + 16)); /* minus HMAC */
+                                 var ciphertext = BitcoinAux.bytesToWordArray(zipData.subarray(ivStartByte + 16, /* iv */
                                  zipData.length - 32)); /* minus HMAC */
                                  var decoded = Bitcoin.CryptoJS.AES.decrypt(
                                  Bitcoin.CryptoJS.lib.CipherParams.create({ciphertext: ciphertext}),
@@ -283,7 +283,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                                     iv: iv});
                                  if (decoded != null && decoded.sigBytes > 0) {
                                      try {
-                                        var decryptedZip = new JSZip(Bitcoin.convert.wordArrayToBytes(decoded));
+                                        var decryptedZip = new JSZip(BitcoinAux.wordArrayToBytes(decoded));
                                         processZip(decryptedZip);
                                      } catch (e) {
                                          console.log(e);
