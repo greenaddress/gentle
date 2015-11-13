@@ -31,18 +31,21 @@
 <div style="float:right; width:260px">
 </div>
 
-<table ng-show="gentle.transactions && gentle.transactions[0].rawtx">
+<table ng-show="gentle.transactions && (gentle.transactions[0].rawtx || gentle.transactions[0].error)">
     <div style="float:right; font-size: 15px">
         <span style="font-size:20px !important;" ng-show="gentle.signing_transactions > 0 && (gentle.transactions.length != gentle.show_transactions.length)"><b>Please wait: signing transactions ({{ gentle.total_signed }})...</b></span>
-        <button ng-show="!gentle.pushing && gentle.show_transactions[0].rawtx && (gentle.transactions.length == gentle.show_transactions.length)" ng-csv="gentle.csv" filename="gentle.csv" csv-header="['Private key', 'Transaction', 'nLockTime']">Export CSV</button>
-        <button ng-show="!gentle.pushing && gentle.show_transactions[0].rawtx && (gentle.transactions.length == gentle.show_transactions.length)" ng-click="confirmPushModalShown = true" ng-disabled="gentle.push_selected.length <= 0">Push selected</button>
+        <button ng-show="!gentle.pushing && (gentle.transactions[0].rawtx || gentle.transactions[0].error) && (gentle.transactions.length == gentle.show_transactions.length)" ng-csv="gentle.csv" filename="gentle.csv" csv-header="['Private key', 'Transaction', 'nLockTime']">Export CSV</button>
+        <button ng-show="!gentle.pushing && (gentle.transactions[0].rawtx || gentle.transactions[0].error) && (gentle.transactions.length == gentle.show_transactions.length)" ng-click="confirmPushModalShown = true" ng-disabled="gentle.push_selected.length <= 0">Push selected</button>
         <span style="font-size:20px !important;" ng-show="gentle.pushing"><b>Pushing transactions</b>: {{ gentle.remaining_time_push }} seconds left</span>
         <br />
         <span style="font-size:14px !important;" ng-show="gentle.pushing">push interval is 20 seconds, to avoid annoying services</span>
     </div>
 
     <tr><th><input type="checkbox" ng-disabled="(gentle.transactions.length != gentle.show_transactions.length)" ng-model="gentle.select_all_txs" ng-change="selectAllTxs()"></th><th>Amount</th><th>nLockTime</th><th>Private key</th><th>Status</th></tr>
-    <tr style="cursor:pointer" ng-dblclick="toggleModal(tx.rawtx)" onMouseOver="this.className='highlight'" onMouseOut="this.className='normal'" ng-repeat="tx in gentle.show_transactions track by $index">
+    <tr ng-if="tx.error" ng-repeat="tx in gentle.show_transactions track by $index">
+        <td colspan="5">{{ tx.error }}</td>
+    </tr>
+    <tr ng-if="!tx.error" style="cursor:pointer" ng-dblclick="toggleModal(tx.rawtx)" onMouseOver="this.className='highlight'" onMouseOut="this.className='normal'" ng-repeat="tx in gentle.show_transactions track by $index">
     <td><input type="checkbox" ng-model="gentle.txs[tx.rawtx].push"  ng-change="selectTx(tx.rawtx)" ng-disabled="tx.parsed.locktime > gentle.fetched_block"></td>
     <td >{{ tx.amount }}</td>
 	<td>{{ tx.parsed.locktime }}</td>

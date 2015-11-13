@@ -93,6 +93,14 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
             });
         };
 
+        var showError = function(index, error) {
+            gentle.csv.push({'key': error, 'hash': '', 'locktime': ''});
+            $scope.$apply(function() {
+                gentle.transactions[index] = {'error': error};
+                gentle.show_transactions[index] = {'error': error};
+            });
+        }
+
         var process = function() {
             gentle.validating = true;
             gentle.transactions = [];
@@ -152,7 +160,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                         gentle.total_signed = '0/' + gentle.transactions.length;
                         gentle.signing_transactions = true;
                         for (var i = 0; i < gentle.transactions.length; i++) {
-                            gentle_services.parseTx(i, gentle.transactions[i], gentle.seed, showTx);
+                            gentle_services.parseTx(i, gentle.transactions[i], gentle.seed, showTx, showError);
                         }
                         gentle.validating = false;
                     };
@@ -226,9 +234,9 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                         var dec_bytes = bip38.decrypt({data: mnem_bytes, key: gentle.passphrase});
                         return $q.when(mnemonics.toMnemonic(dec_bytes));
                     }, function(err) {
-			gentle.err = err;
-	    		return $q.when();		
-		    });
+                        gentle.err = err;
+                        return $q.when();
+                    });
                 }
 		else {
 		    gentle.err = "Please verify your input, invalid number of mnemonic words or bad hex seed";
@@ -302,7 +310,7 @@ angular.module('gentleApp.controllers', ['gentleApp.mnemonics_services']).
                          });
                      })(++toSeedN);
                  });
-                
+
             } else return $q.when();
         }
 
