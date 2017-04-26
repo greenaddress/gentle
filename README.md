@@ -12,7 +12,7 @@ The system will automatically provide you with the fund's private keys and trans
 
 The user is also able to check transactions details, export data in CSV format or directly push transactions via third-party services.
 
-## Which browser does Gentle support?
+## Which browsers does Gentle support?
 
 Firefox and Chrome/Chromium only at the moment but an app is in the works.
 
