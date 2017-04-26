@@ -1,6 +1,6 @@
 ## What is Gentle?
 
-Gentle is a tool that [GreenAddress](https://greenaddress.it) has developed for peace of mind of its users: Its function is to free funds from your GreenAddress wallet without GreenAddress's intervention.
+Gentle is a tool that [GreenAddress](https://greenaddress.it) has developed for the peace of mind of its users: Its function is to free funds from your GreenAddress wallet without GreenAddress's intervention.
 
 ## What does this mean?
 
