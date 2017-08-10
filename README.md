@@ -1,3 +1,5 @@
+Warning: Gentle is deprecated - please use the [garecovery](https://github.com/greenaddress/garecovery) tool instead.
+
 ## What is Gentle?
 
 Gentle is a tool that [GreenAddress](https://greenaddress.it) has developed for the peace of mind of its users: Its function is to free funds from your GreenAddress wallet without GreenAddress's intervention.
